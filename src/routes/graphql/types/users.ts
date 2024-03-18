@@ -51,7 +51,7 @@ export const userType: GraphQLObjectType<UserWithSubscriptions, Context> =
       posts: {
         type: new GraphQLList(postType),
         async resolve({ id }, _, { postsLoader }) {
-          return await postsLoader.loadMany(id);
+          return await postsLoader.load(id);
         },
       },
       profile: {

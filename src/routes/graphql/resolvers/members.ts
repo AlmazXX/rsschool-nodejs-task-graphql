@@ -7,7 +7,7 @@ export const memberTypes = async (_, { prisma }: Context): Promise<IMember[]> =>
 };
 
 export const memberType = async (
-  { memberTypeId: id }: { memberTypeId: MemberType },
+  { id }: { id: MemberType },
   { prisma }: Context,
 ): Promise<IMember | null> => {
   return await prisma.memberType.findUnique({ where: { id } });

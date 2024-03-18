@@ -12,7 +12,7 @@ export interface IMember {
 }
 
 export const membersEnum = new GraphQLEnumType({
-  name: 'MemberType',
+  name: 'MemberTypeId',
   values: {
     [MemberType.BASIC]: { value: MemberType.BASIC },
     [MemberType.BUSINESS]: { value: MemberType.BUSINESS },

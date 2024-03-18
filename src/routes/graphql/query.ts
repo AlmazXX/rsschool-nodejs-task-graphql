@@ -36,7 +36,7 @@ export const query = new GraphQLObjectType({
     memberType: {
       type: memberType,
       args: {
-        memberTypeId: { type: membersEnum },
+        id: { type: membersEnum },
       },
     },
     profiles: {
