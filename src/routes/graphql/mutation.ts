@@ -1,6 +1,7 @@
-import { GraphQLNonNull, GraphQLObjectType } from 'graphql';
+import { GraphQLNonNull, GraphQLObjectType, GraphQLString } from 'graphql';
 import { postInput, postType, postUpdateInput } from './types/posts.js';
 import { profileInput, profileType, profileUpdateInput } from './types/profiles.js';
+import { subscriptionType } from './types/subscriptions.js';
 import { userInput, userType, userUpdateInput } from './types/users.js';
 import { UUIDType } from './types/uuid.js';
 
@@ -24,6 +25,20 @@ export const mutation = new GraphQLObjectType({
       type: userType,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
+      },
+    },
+    subscribeToUser: {
+      type: userType,
+      args: {
+        subscriberId: { type: new GraphQLNonNull(GraphQLString) },
+        authorId: { type: new GraphQLNonNull(GraphQLString) },
+      },
+    },
+    unsubscribeFromUser: {
+      type: subscriptionType,
+      args: {
+        subscriberId: { type: new GraphQLNonNull(GraphQLString) },
+        authorId: { type: new GraphQLNonNull(GraphQLString) },
       },
     },
     createPost: {

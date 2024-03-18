@@ -7,7 +7,7 @@ import {
   profiles,
   updateProfile,
 } from './profiles.js';
-import { subscriptions } from './subscriptions.js';
+import { subscribeToUser, subscriptions, unsubscribeFromUser } from './subscriptions.js';
 import { createUser, deleteUser, updateUser, user, users } from './users.js';
 
 export default {
@@ -16,6 +16,8 @@ export default {
   createUser,
   updateUser,
   deleteUser,
+  subscribeToUser,
+  unsubscribeFromUser,
   posts,
   post,
   createPost,
