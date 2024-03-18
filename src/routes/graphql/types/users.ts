@@ -1,11 +1,13 @@
+import { PrismaClient } from '@prisma/client';
 import {
   GraphQLFloat,
   GraphQLInputObjectType,
+  GraphQLList,
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql';
-import { Context } from '../context/context.js';
+import { postType } from './posts.js';
 import { UUIDType } from './uuid.js';
 
 export interface IUser {
@@ -32,11 +34,20 @@ export const userUpdateInput = new GraphQLInputObjectType({
   }),
 });
 
-export const userType = new GraphQLObjectType<IUser, Context>({
+export const userType: GraphQLObjectType<IUser, PrismaClient> = new GraphQLObjectType<
+  IUser,
+  PrismaClient
+>({
   name: 'User',
   fields: () => ({
     id: { type: UUIDType },
     name: { type: GraphQLString },
     balance: { type: GraphQLFloat },
+    posts: {
+      type: new GraphQLList(postType),
+      async resolve({ id: authorId }, _, context) {
+        return await context.post.findMany({ where: { authorId } });
+      },
+    },
   }),
 });
