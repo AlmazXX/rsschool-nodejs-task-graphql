@@ -1,6 +1,7 @@
 import { GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import { memberType, membersEnum } from './types/members.js';
 import { postType } from './types/posts.js';
+import { profileType } from './types/profiles.js';
 import { userType } from './types/users.js';
 import { UUIDType } from './types/uuid.js';
 
@@ -32,6 +33,15 @@ export const query = new GraphQLObjectType({
       type: memberType,
       args: {
         memberTypeId: { type: membersEnum },
+      },
+    },
+    profiles: {
+      type: new GraphQLList(profileType),
+    },
+    profile: {
+      type: profileType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
       },
     },
   }),
