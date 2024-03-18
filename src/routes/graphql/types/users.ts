@@ -24,6 +24,14 @@ export const userInput = new GraphQLInputObjectType({
   }),
 });
 
+export const userUpdateInput = new GraphQLInputObjectType({
+  name: 'UserUpdateInput',
+  fields: () => ({
+    name: { type: GraphQLString },
+    balance: { type: GraphQLFloat },
+  }),
+});
+
 export const userType = new GraphQLObjectType<IUser, Context>({
   name: 'User',
   fields: () => ({
