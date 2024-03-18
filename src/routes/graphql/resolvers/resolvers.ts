@@ -1,3 +1,4 @@
+import { memberType, memberTypes } from './members.js';
 import { createPost, deletePost, post, posts, updatePost } from './posts.js';
 import { createUser, deleteUser, updateUser, user, users } from './users.js';
 
@@ -12,4 +13,6 @@ export default {
   createPost,
   updatePost,
   deletePost,
+  memberTypes,
+  memberType,
 };

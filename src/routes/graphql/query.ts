@@ -1,4 +1,5 @@
 import { GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
+import { memberType, membersEnum } from './types/members.js';
 import { postType } from './types/posts.js';
 import { userType } from './types/users.js';
 import { UUIDType } from './types/uuid.js';
@@ -22,6 +23,15 @@ export const query = new GraphQLObjectType({
       type: postType,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
+      },
+    },
+    memberTypes: {
+      type: new GraphQLList(memberType),
+    },
+    memberType: {
+      type: memberType,
+      args: {
+        memberTypeId: { type: membersEnum },
       },
     },
   }),
