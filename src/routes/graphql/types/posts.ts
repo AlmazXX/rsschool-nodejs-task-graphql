@@ -1,10 +1,10 @@
-import { PrismaClient } from '@prisma/client';
 import {
   GraphQLInputObjectType,
   GraphQLNonNull,
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql';
+import { Context } from '../context/context.js';
 import { IUser, userType } from './users.js';
 import { UUIDType } from './uuid.js';
 
@@ -35,7 +35,7 @@ export const postUpdateInput = new GraphQLInputObjectType({
   }),
 });
 
-export const postType = new GraphQLObjectType<IPost, PrismaClient>({
+export const postType = new GraphQLObjectType<IPost, Context>({
   name: 'Post',
   fields: () => ({
     id: { type: UUIDType },
@@ -43,8 +43,8 @@ export const postType = new GraphQLObjectType<IPost, PrismaClient>({
     content: { type: GraphQLString },
     author: {
       type: userType,
-      async resolve({ authorId: id }, _, context) {
-        return await context.user.findUnique({ where: { id } });
+      async resolve({ authorId }, _, { usersLoader }) {
+        return await usersLoader.load(authorId);
       },
     },
   }),

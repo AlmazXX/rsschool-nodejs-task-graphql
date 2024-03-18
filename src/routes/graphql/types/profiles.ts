@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import {
   GraphQLBoolean,
   GraphQLInputObjectType,
@@ -6,6 +5,7 @@ import {
   GraphQLNonNull,
   GraphQLObjectType,
 } from 'graphql';
+import { Context } from '../context/context.js';
 import { memberType, membersEnum } from './members.js';
 import { IUser, userType } from './users.js';
 import { UUIDType } from './uuid.js';
@@ -40,7 +40,7 @@ export const profileUpdateInput = new GraphQLInputObjectType({
   }),
 });
 
-export const profileType = new GraphQLObjectType<IProfile, PrismaClient>({
+export const profileType = new GraphQLObjectType<IProfile, Context>({
   name: 'Profile',
   fields: () => ({
     id: { type: UUIDType },
@@ -48,14 +48,14 @@ export const profileType = new GraphQLObjectType<IProfile, PrismaClient>({
     yearOfBirth: { type: GraphQLInt },
     user: {
       type: userType,
-      async resolve({ userId: id }, _, context) {
-        return await context.user.findUnique({ where: { id } });
+      async resolve({ userId }, _, { usersLoader }) {
+        return await usersLoader.load(userId);
       },
     },
     memberType: {
       type: memberType,
-      async resolve({ memberTypeId: id }, _, context) {
-        return await context.memberType.findUnique({ where: { id } });
+      async resolve({ memberTypeId }, _, { membersLoader }) {
+        return await membersLoader.load(memberTypeId);
       },
     },
   }),

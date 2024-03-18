@@ -1,4 +1,3 @@
-import { PrismaClient } from '@prisma/client';
 import {
   GraphQLFloat,
   GraphQLInputObjectType,
@@ -7,7 +6,10 @@ import {
   GraphQLObjectType,
   GraphQLString,
 } from 'graphql';
+import { Context } from '../context/context.js';
 import { postType } from './posts.js';
+import { profileType } from './profiles.js';
+import { ISubscription } from './subscriptions.js';
 import { UUIDType } from './uuid.js';
 
 export interface IUser {
@@ -17,6 +19,11 @@ export interface IUser {
 }
 
 export type UserInput = Omit<IUser, 'id'>;
+
+export interface UserWithSubscriptions extends IUser {
+  subscribedToUser: ISubscription[];
+  userSubscribedTo: ISubscription[];
+}
 
 export const userInput = new GraphQLInputObjectType({
   name: 'UserInput',
@@ -34,20 +41,42 @@ export const userUpdateInput = new GraphQLInputObjectType({
   }),
 });
 
-export const userType: GraphQLObjectType<IUser, PrismaClient> = new GraphQLObjectType<
-  IUser,
-  PrismaClient
->({
-  name: 'User',
-  fields: () => ({
-    id: { type: UUIDType },
-    name: { type: GraphQLString },
-    balance: { type: GraphQLFloat },
-    posts: {
-      type: new GraphQLList(postType),
-      async resolve({ id: authorId }, _, context) {
-        return await context.post.findMany({ where: { authorId } });
+export const userType: GraphQLObjectType<UserWithSubscriptions, Context> =
+  new GraphQLObjectType<UserWithSubscriptions, Context>({
+    name: 'User',
+    fields: () => ({
+      id: { type: UUIDType },
+      name: { type: GraphQLString },
+      balance: { type: GraphQLFloat },
+      posts: {
+        type: new GraphQLList(postType),
+        async resolve({ id }, _, { postsLoader }) {
+          return await postsLoader.loadMany(id);
+        },
       },
-    },
-  }),
-});
+      profile: {
+        type: profileType,
+        async resolve({ id }, _, { profilesLoader }) {
+          return await profilesLoader.load(id);
+        },
+      },
+      subscribedToUser: {
+        type: new GraphQLList(userType),
+        async resolve({ subscribedToUser }, _, { usersLoader }) {
+          return subscribedToUser.length
+            ? await usersLoader.loadMany(
+                subscribedToUser.map(({ subscriberId }) => subscriberId),
+              )
+            : null;
+        },
+      },
+      userSubscribedTo: {
+        type: new GraphQLList(userType),
+        async resolve({ userSubscribedTo }, _, { usersLoader }) {
+          return userSubscribedTo.length
+            ? await usersLoader.loadMany(userSubscribedTo.map(({ authorId }) => authorId))
+            : null;
+        },
+      },
+    }),
+  });

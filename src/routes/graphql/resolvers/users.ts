@@ -1,22 +1,34 @@
 import { PrismaClient } from '@prisma/client';
+import { Context } from '../context/context.js';
 import { IUser, UserInput } from '../types/users.js';
 
-export const users = async (_, context: PrismaClient): Promise<IUser[]> => {
-  return await context.user.findMany();
+export const users = async (_, { prisma, usersLoader }: Context): Promise<IUser[]> => {
+  const users = await prisma.user.findMany({
+    include: { subscribedToUser: true, userSubscribedTo: true },
+  });
+
+  users.forEach((user) => {
+    usersLoader.prime(user.id, user);
+  });
+
+  return users;
 };
 
 export const user = async (
   { id }: { id: string },
-  context: PrismaClient,
+  { prisma }: Context,
 ): Promise<IUser | null> => {
-  return await context.user.findUnique({ where: { id } });
+  return await prisma.user.findUnique({
+    where: { id },
+    include: { subscribedToUser: true, userSubscribedTo: true },
+  });
 };
 
 export const createUser = async (
   { user }: { user: UserInput },
-  context: PrismaClient,
+  { prisma }: Context,
 ): Promise<IUser> => {
-  return await context.user.create({ data: user });
+  return await prisma.user.create({ data: user });
 };
 
 export const updateUser = async (
@@ -27,14 +39,28 @@ export const updateUser = async (
     id: string;
     user: Partial<UserInput>;
   },
-  context: PrismaClient,
+  { prisma }: Context,
 ): Promise<IUser> => {
-  return await context.user.update({ where: { id }, data: user });
+  return await prisma.user.update({ where: { id }, data: user });
 };
 
 export const deleteUser = async (
   { id }: { id: string },
-  context: PrismaClient,
+  { prisma }: Context,
 ): Promise<IUser> => {
-  return await context.user.delete({ where: { id } });
+  return await prisma.user.delete({ where: { id } });
+};
+
+export const batchUsers = async (userIds: readonly string[], prisma: PrismaClient) => {
+  const users = await prisma.user.findMany({
+    where: { id: { in: <string[]>userIds } },
+    include: { userSubscribedTo: true, subscribedToUser: true },
+  });
+
+  const mappedUser = users.reduce<Record<string, IUser>>((acc, user) => {
+    acc[user.id] = user;
+    return acc;
+  }, {});
+
+  return userIds.map((id) => mappedUser[id]);
 };
