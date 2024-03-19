@@ -9,7 +9,6 @@ import {
 import { Context } from '../context/context.js';
 import { postType } from './posts.js';
 import { profileType } from './profiles.js';
-import { ISubscription } from './subscriptions.js';
 import { UUIDType } from './uuid.js';
 
 export interface IUser {
@@ -20,13 +19,8 @@ export interface IUser {
 
 export type UserInput = Omit<IUser, 'id'>;
 
-export interface UserWithSubscriptions extends IUser {
-  subscribedToUser: ISubscription[];
-  userSubscribedTo: ISubscription[];
-}
-
 export const userInput = new GraphQLInputObjectType({
-  name: 'UserInput',
+  name: 'CreateUserInput',
   fields: () => ({
     name: { type: new GraphQLNonNull(GraphQLString) },
     balance: { type: new GraphQLNonNull(GraphQLFloat) },
@@ -34,49 +28,45 @@ export const userInput = new GraphQLInputObjectType({
 });
 
 export const userUpdateInput = new GraphQLInputObjectType({
-  name: 'UserUpdateInput',
+  name: 'ChangeUserInput',
   fields: () => ({
     name: { type: GraphQLString },
     balance: { type: GraphQLFloat },
   }),
 });
 
-export const userType: GraphQLObjectType<UserWithSubscriptions, Context> =
-  new GraphQLObjectType<UserWithSubscriptions, Context>({
-    name: 'User',
-    fields: () => ({
-      id: { type: UUIDType },
-      name: { type: GraphQLString },
-      balance: { type: GraphQLFloat },
-      posts: {
-        type: new GraphQLList(postType),
-        async resolve({ id }, _, { postsLoader }) {
-          return await postsLoader.load(id);
-        },
+export const userType: GraphQLObjectType<IUser, Context> = new GraphQLObjectType<
+  IUser,
+  Context
+>({
+  name: 'User',
+  fields: () => ({
+    id: { type: UUIDType },
+    name: { type: GraphQLString },
+    balance: { type: GraphQLFloat },
+    posts: {
+      type: new GraphQLList(postType),
+      async resolve({ id }, _, { postsLoader }) {
+        return await postsLoader.load(id);
       },
-      profile: {
-        type: profileType,
-        async resolve({ id }, _, { profilesLoader }) {
-          return await profilesLoader.load(id);
-        },
+    },
+    profile: {
+      type: profileType,
+      async resolve({ id }, _, { profilesLoader }) {
+        return await profilesLoader.load(id);
       },
-      subscribedToUser: {
-        type: new GraphQLList(userType),
-        async resolve({ subscribedToUser }, _, { usersLoader }) {
-          return subscribedToUser.length
-            ? await usersLoader.loadMany(
-                subscribedToUser.map(({ subscriberId }) => subscriberId),
-              )
-            : null;
-        },
+    },
+    subscribedToUser: {
+      type: new GraphQLList(userType),
+      async resolve({ id }, _, { subscribersLoader }) {
+        return subscribersLoader.load(id);
       },
-      userSubscribedTo: {
-        type: new GraphQLList(userType),
-        async resolve({ userSubscribedTo }, _, { usersLoader }) {
-          return userSubscribedTo.length
-            ? await usersLoader.loadMany(userSubscribedTo.map(({ authorId }) => authorId))
-            : null;
-        },
+    },
+    userSubscribedTo: {
+      type: new GraphQLList(userType),
+      async resolve({ id }, _, { authorsLoader }) {
+        return authorsLoader.load(id);
       },
-    }),
-  });
+    },
+  }),
+});
