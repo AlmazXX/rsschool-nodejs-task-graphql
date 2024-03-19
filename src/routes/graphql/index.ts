@@ -19,11 +19,22 @@ const plugin: FastifyPluginAsyncTypebox = async (fastify) => {
     },
     async handler(req) {
       const { query: source, variables: variableValues } = req.body;
+      try {
+        const errors = validate(schema, parse(source), [depthLimit(5)]);
 
-      const errors = validate(schema, parse(source), [depthLimit(5)]);
-
-      if (errors.length > 0) {
-        return { errors };
+        if (errors.length > 0) {
+          return { errors };
+        }
+      } catch (error) {
+        if (
+          error &&
+          typeof error === 'object' &&
+          'message' in error &&
+          typeof error.message === 'string'
+        ) {
+          throw fastify.httpErrors.badRequest(`Invalid gql query. ${error.message}`);
+        }
+        throw new Error();
       }
 
       const response = await graphql({
