@@ -21,7 +21,7 @@ export interface IProfile {
 export type ProfileInput = Omit<IProfile, 'id'>;
 
 export const profileInput = new GraphQLInputObjectType({
-  name: 'ProfileInput',
+  name: 'CreateProfileInput',
   fields: () => ({
     isMale: { type: new GraphQLNonNull(GraphQLBoolean) },
     yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
@@ -31,11 +31,10 @@ export const profileInput = new GraphQLInputObjectType({
 });
 
 export const profileUpdateInput = new GraphQLInputObjectType({
-  name: 'ProfileUpdateInput',
+  name: 'ChangeProfileInput',
   fields: () => ({
     isMale: { type: GraphQLBoolean },
     yearOfBirth: { type: GraphQLInt },
-    userId: { type: UUIDType },
     memberTypeId: { type: membersEnum },
   }),
 });

@@ -14,24 +14,29 @@ export const profile = async (
 };
 
 export const createProfile = async (
-  { profile }: { profile: ProfileInput },
+  { dto: data }: { dto: ProfileInput },
   { prisma }: Context,
 ): Promise<IProfile> => {
-  return await prisma.profile.create({ data: profile });
+  return await prisma.profile.create({ data });
 };
 
-export const updateProfile = async (
-  { id, profile }: { id: string; profile: Partial<ProfileInput> },
+export const changeProfile = async (
+  { id, dto: data }: { id: string; dto: Partial<ProfileInput> },
   { prisma }: Context,
-): Promise<IProfile> => {
-  return await prisma.profile.update({ where: { id }, data: profile });
+): Promise<IProfile | null> => {
+  return await prisma.profile.update({ where: { id }, data });
 };
 
 export const deleteProfile = async (
   { id }: { id: string },
   { prisma }: Context,
-): Promise<IProfile> => {
-  return await prisma.profile.delete({ where: { id } });
+): Promise<boolean> => {
+  try {
+    await prisma.profile.delete({ where: { id } });
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 export const batchProfiles = async (userIds: readonly string[], prisma: PrismaClient) => {
@@ -44,5 +49,5 @@ export const batchProfiles = async (userIds: readonly string[], prisma: PrismaCl
     return acc;
   }, {});
 
-  return userIds.map((id) => mappedProfiles[id]);
+  return userIds.map((id) => mappedProfiles[id] ?? null);
 };
