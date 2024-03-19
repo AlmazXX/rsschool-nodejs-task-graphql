@@ -1,34 +1,40 @@
 import { memberType, memberTypes } from './members.js';
-import { createPost, deletePost, post, posts, updatePost } from './posts.js';
+import { changePost, createPost, deletePost, post, posts } from './posts.js';
 import {
+  changeProfile,
   createProfile,
   deleteProfile,
   profile,
   profiles,
-  updateProfile,
 } from './profiles.js';
-import { subscribeToUser, subscriptions, unsubscribeFromUser } from './subscriptions.js';
-import { createUser, deleteUser, updateUser, user, users } from './users.js';
+import {
+  changeUser,
+  createUser,
+  deleteUser,
+  subscribeTo,
+  unsubscribeFrom,
+  user,
+  users,
+} from './users.js';
 
 export default {
   users,
   user,
   createUser,
-  updateUser,
+  changeUser,
   deleteUser,
-  subscribeToUser,
-  unsubscribeFromUser,
+  subscribeTo,
+  unsubscribeFrom,
   posts,
   post,
   createPost,
-  updatePost,
+  changePost,
   deletePost,
   memberTypes,
   memberType,
   profiles,
   profile,
   createProfile,
-  updateProfile,
+  changeProfile,
   deleteProfile,
-  subscriptions,
 };

@@ -1,7 +1,11 @@
-import { GraphQLNonNull, GraphQLObjectType, GraphQLString } from 'graphql';
+import {
+  GraphQLBoolean,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLString,
+} from 'graphql';
 import { postInput, postType, postUpdateInput } from './types/posts.js';
 import { profileInput, profileType, profileUpdateInput } from './types/profiles.js';
-import { subscriptionType } from './types/subscriptions.js';
 import { userInput, userType, userUpdateInput } from './types/users.js';
 import { UUIDType } from './types/uuid.js';
 
@@ -11,51 +15,51 @@ export const mutation = new GraphQLObjectType({
     createUser: {
       type: userType,
       args: {
-        user: { type: new GraphQLNonNull(userInput) },
+        dto: { type: new GraphQLNonNull(userInput) },
       },
     },
-    updateUser: {
+    changeUser: {
       type: userType,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
-        user: { type: new GraphQLNonNull(userUpdateInput) },
+        dto: { type: new GraphQLNonNull(userUpdateInput) },
       },
     },
     deleteUser: {
-      type: userType,
+      type: GraphQLBoolean,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
       },
     },
-    subscribeToUser: {
+    subscribeTo: {
       type: userType,
       args: {
-        subscriberId: { type: new GraphQLNonNull(GraphQLString) },
-        authorId: { type: new GraphQLNonNull(GraphQLString) },
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
       },
     },
-    unsubscribeFromUser: {
-      type: subscriptionType,
+    unsubscribeFrom: {
+      type: GraphQLString,
       args: {
-        subscriberId: { type: new GraphQLNonNull(GraphQLString) },
-        authorId: { type: new GraphQLNonNull(GraphQLString) },
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
       },
     },
     createPost: {
       type: postType,
       args: {
-        post: { type: new GraphQLNonNull(postInput) },
+        dto: { type: new GraphQLNonNull(postInput) },
       },
     },
-    updatePost: {
+    changePost: {
       type: postType,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
-        post: { type: new GraphQLNonNull(postUpdateInput) },
+        dto: { type: new GraphQLNonNull(postUpdateInput) },
       },
     },
     deletePost: {
-      type: postType,
+      type: GraphQLBoolean,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
       },
@@ -63,18 +67,18 @@ export const mutation = new GraphQLObjectType({
     createProfile: {
       type: profileType,
       args: {
-        profile: { type: new GraphQLNonNull(profileInput) },
+        dto: { type: new GraphQLNonNull(profileInput) },
       },
     },
-    updateProfile: {
+    changeProfile: {
       type: profileType,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
-        profile: { type: new GraphQLNonNull(profileUpdateInput) },
+        dto: { type: profileUpdateInput },
       },
     },
     deleteProfile: {
-      type: profileType,
+      type: GraphQLBoolean,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
       },

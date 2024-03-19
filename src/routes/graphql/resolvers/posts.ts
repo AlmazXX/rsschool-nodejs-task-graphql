@@ -14,24 +14,29 @@ export const post = async (
 };
 
 export const createPost = async (
-  { post }: { post: PostInput },
+  { dto: data }: { dto: PostInput },
   { prisma }: Context,
 ): Promise<IPost> => {
-  return await prisma.post.create({ data: post });
+  return await prisma.post.create({ data });
 };
 
-export const updatePost = async (
-  { id, post }: { id: string; post: Partial<PostInput> },
+export const changePost = async (
+  { id, dto: data }: { id: string; dto: Partial<PostInput> },
   { prisma }: Context,
 ): Promise<IPost> => {
-  return await prisma.post.update({ where: { id }, data: post });
+  return await prisma.post.update({ where: { id }, data });
 };
 
 export const deletePost = async (
   { id }: { id: string },
   { prisma }: Context,
-): Promise<IPost> => {
-  return await prisma.post.delete({ where: { id } });
+): Promise<boolean> => {
+  try {
+    await prisma.post.delete({ where: { id } });
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 export const batchPosts = async (authorIds: readonly string[], prisma: PrismaClient) => {
@@ -45,5 +50,5 @@ export const batchPosts = async (authorIds: readonly string[], prisma: PrismaCli
     return acc;
   }, {});
 
-  return authorIds.map((id) => mappedPosts[id]);
+  return authorIds.map((id) => mappedPosts[id] ?? []);
 };

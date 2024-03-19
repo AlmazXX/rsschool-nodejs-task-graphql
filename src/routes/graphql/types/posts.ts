@@ -18,20 +18,19 @@ export interface IPost {
 export type PostInput = Omit<IPost, 'id'>;
 
 export const postInput = new GraphQLInputObjectType({
-  name: 'PostInput',
+  name: 'CreatePostInput',
   fields: () => ({
     title: { type: new GraphQLNonNull(GraphQLString) },
-    content: { type: GraphQLString },
+    content: { type: new GraphQLNonNull(GraphQLString) },
     authorId: { type: new GraphQLNonNull(UUIDType) },
   }),
 });
 
 export const postUpdateInput = new GraphQLInputObjectType({
-  name: 'PostUpdateInput',
+  name: 'ChangePostInput',
   fields: () => ({
     title: { type: GraphQLString },
     content: { type: GraphQLString },
-    authorId: { type: UUIDType },
   }),
 });
 

@@ -13,9 +13,12 @@ export const memberType = async (
   return await prisma.memberType.findUnique({ where: { id } });
 };
 
-export const batchMembers = async (ids: readonly string[], prisma: PrismaClient) => {
+export const batchMembers = async (
+  memberTypeIds: readonly string[],
+  prisma: PrismaClient,
+) => {
   const memberTypes = await prisma.memberType.findMany({
-    where: { id: { in: <string[]>ids } },
+    where: { profiles: { some: { memberTypeId: { in: <string[]>memberTypeIds } } } },
   });
 
   const mappedMemberTypes = memberTypes.reduce<Record<string, IMember>>(
@@ -26,5 +29,5 @@ export const batchMembers = async (ids: readonly string[], prisma: PrismaClient)
     {},
   );
 
-  return ids.map((id) => mappedMemberTypes[id]);
+  return memberTypeIds.map((id) => mappedMemberTypes[id] ?? null);
 };
