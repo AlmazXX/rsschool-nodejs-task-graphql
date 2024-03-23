@@ -1,8 +1,16 @@
 import { PrismaClient } from '@prisma/client';
-import { GraphQLResolveInfo } from 'graphql';
+import {
+  GraphQLList,
+  GraphQLNonNull,
+  GraphQLObjectType,
+  GraphQLResolveInfo,
+} from 'graphql';
 import { parseResolveInfo } from 'graphql-parse-resolve-info';
+import { HttpCompatibleError } from '../../../plugins/handle-http-error.js';
 import { Context } from '../context/context.js';
-import { IUser, UserInput } from '../types/users.js';
+import { Payload, PayloadType } from '../types/payload.js';
+import { IUser, IUserInput, UserInput, UserUpdateInput } from '../types/users.js';
+import { UUIDType } from '../types/uuid.js';
 
 export const users = async (
   _,
@@ -45,86 +53,147 @@ export const users = async (
   return users;
 };
 
-export const user = async (
-  { id }: { id: string },
-  { prisma }: Context,
-): Promise<IUser | null> => {
-  return await prisma.user.findUnique({
-    where: { id },
-  });
-};
-
-export const createUser = async (
-  { dto: data }: { dto: UserInput },
-  { prisma }: Context,
-): Promise<IUser> => {
-  return await prisma.user.create({ data });
-};
-
-export const changeUser = async (
-  {
-    id,
-    dto: data,
-  }: {
-    id: string;
-    dto: Partial<UserInput>;
-  },
-  { prisma }: Context,
-): Promise<IUser> => {
-  return await prisma.user.update({ where: { id }, data });
-};
-
-export const deleteUser = async (
-  { id }: { id: string },
-  { prisma }: Context,
-): Promise<boolean> => {
-  try {
-    await prisma.user.delete({ where: { id } });
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-export const subscribeTo = async (
-  {
-    userId: id,
-    authorId,
-  }: {
-    userId: string;
-    authorId: string;
-  },
-  { prisma }: Context,
-) => {
-  return await prisma.user.update({
-    where: { id },
-    data: { userSubscribedTo: { create: { authorId } } },
-  });
-};
-
-export const unsubscribeFrom = async (
-  {
-    userId,
-    authorId,
-  }: {
-    userId: string;
-    authorId: string;
-  },
-  { prisma }: Context,
-) => {
-  try {
-    await prisma.subscribersOnAuthors.delete({
-      where: { subscriberId_authorId: { subscriberId: userId, authorId } },
-    });
-  } catch {
-    return null;
-  }
-};
+export const UserMutations = new GraphQLObjectType<unknown, Context>({
+  name: 'UserMutations',
+  fields: () => ({
+    create: {
+      type: new GraphQLNonNull(PayloadType),
+      args: {
+        dto: {
+          type: new GraphQLNonNull(UserInput),
+        },
+      },
+      resolve: async (_, { dto: data }: { dto: IUserInput }, { prisma }) => {
+        const payload = Payload.withDefault();
+        try {
+          const item = await prisma.user.create({ data });
+          payload.withSuccess();
+          payload.withRecord(item);
+        } catch (error) {
+          if (error instanceof HttpCompatibleError) {
+            payload.withFail();
+            payload.withError(error);
+          }
+        }
+        return payload;
+      },
+    },
+    change: {
+      type: new GraphQLNonNull(PayloadType),
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(UserUpdateInput) },
+      },
+      resolve: async (
+        _,
+        { id, dto: data }: { id: string; dto: Partial<IUserInput> },
+        { prisma },
+      ) => {
+        const payload = Payload.withDefault();
+        try {
+          const item = await prisma.user.update({ where: { id }, data });
+          payload.withSuccess();
+          payload.withRecord(item);
+        } catch (error) {
+          if (error instanceof HttpCompatibleError) {
+            payload.withFail();
+            payload.withError(error);
+          }
+        }
+        return payload;
+      },
+    },
+    delete: {
+      type: new GraphQLNonNull(PayloadType),
+      args: {
+        id: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UUIDType))) },
+      },
+      resolve: async (_, { id }: { id: string[] }, { prisma }) => {
+        const payload = Payload.withDefault();
+        try {
+          await prisma.user.deleteMany({ where: { id: { in: id } } });
+          payload.withSuccess();
+        } catch (error) {
+          if (error instanceof HttpCompatibleError) {
+            payload.withFail();
+            payload.withError(error);
+          }
+        }
+        return payload;
+      },
+    },
+    subscribeTo: {
+      type: new GraphQLNonNull(PayloadType),
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (
+        _,
+        {
+          userId: id,
+          authorId,
+        }: {
+          userId: string;
+          authorId: string;
+        },
+        { prisma }: Context,
+      ) => {
+        const payload = Payload.withDefault();
+        try {
+          const item = await prisma.user.update({
+            where: { id },
+            data: { userSubscribedTo: { create: { authorId } } },
+          });
+          payload.withSuccess();
+          payload.withRecord(item);
+        } catch (error) {
+          if (error instanceof HttpCompatibleError) {
+            payload.withFail();
+            payload.withError(error);
+          }
+        }
+        return payload;
+      },
+    },
+    unsubscribeFrom: {
+      type: new GraphQLNonNull(PayloadType),
+      args: {
+        userId: { type: new GraphQLNonNull(UUIDType) },
+        authorId: { type: new GraphQLNonNull(UUIDType) },
+      },
+      resolve: async (
+        _,
+        {
+          userId,
+          authorId,
+        }: {
+          userId: string;
+          authorId: string;
+        },
+        { prisma }: Context,
+      ) => {
+        const payload = Payload.withDefault();
+        try {
+          await prisma.subscribersOnAuthors.delete({
+            where: { subscriberId_authorId: { subscriberId: userId, authorId } },
+          });
+          payload.withSuccess();
+        } catch (error) {
+          if (error instanceof HttpCompatibleError) {
+            payload.withFail();
+            payload.withError(error);
+          }
+        }
+        return payload;
+      },
+    },
+  }),
+});
 
 export const batchUsers = async (userIds: readonly string[], prisma: PrismaClient) => {
   const users = await prisma.user.findMany({
     where: { id: { in: <string[]>userIds } },
-    include: { userSubscribedTo: true, subscribedToUser: true },
   });
 
   const mappedUser = users.reduce<Record<string, IUser>>((acc, user) => {

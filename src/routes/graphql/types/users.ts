@@ -7,8 +7,8 @@ import {
   GraphQLString,
 } from 'graphql';
 import { Context } from '../context/context.js';
-import { postType } from './posts.js';
-import { profileType } from './profiles.js';
+import { PostType } from './posts.js';
+import { ProfileType } from './profiles.js';
 import { UUIDType } from './uuid.js';
 
 export interface IUser {
@@ -17,9 +17,9 @@ export interface IUser {
   balance: number;
 }
 
-export type UserInput = Omit<IUser, 'id'>;
+export type IUserInput = Omit<IUser, 'id'>;
 
-export const userInput = new GraphQLInputObjectType({
+export const UserInput = new GraphQLInputObjectType({
   name: 'CreateUserInput',
   fields: () => ({
     name: { type: new GraphQLNonNull(GraphQLString) },
@@ -27,7 +27,7 @@ export const userInput = new GraphQLInputObjectType({
   }),
 });
 
-export const userUpdateInput = new GraphQLInputObjectType({
+export const UserUpdateInput = new GraphQLInputObjectType({
   name: 'ChangeUserInput',
   fields: () => ({
     name: { type: GraphQLString },
@@ -35,7 +35,7 @@ export const userUpdateInput = new GraphQLInputObjectType({
   }),
 });
 
-export const userType: GraphQLObjectType<IUser, Context> = new GraphQLObjectType<
+export const UserType: GraphQLObjectType<IUser, Context> = new GraphQLObjectType<
   IUser,
   Context
 >({
@@ -45,28 +45,38 @@ export const userType: GraphQLObjectType<IUser, Context> = new GraphQLObjectType
     name: { type: GraphQLString },
     balance: { type: GraphQLFloat },
     posts: {
-      type: new GraphQLList(postType),
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(PostType))),
       async resolve({ id }, _, { postsLoader }) {
         return await postsLoader.load(id);
       },
     },
     profile: {
-      type: profileType,
+      type: ProfileType,
       async resolve({ id }, _, { profilesLoader }) {
         return await profilesLoader.load(id);
       },
     },
     subscribedToUser: {
-      type: new GraphQLList(userType),
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
       async resolve({ id }, _, { subscribersLoader }) {
         return subscribersLoader.load(id);
       },
     },
     userSubscribedTo: {
-      type: new GraphQLList(userType),
+      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
       async resolve({ id }, _, { authorsLoader }) {
         return authorsLoader.load(id);
       },
     },
   }),
 });
+
+export const isUserRecord = (record: unknown): record is IUser => {
+  return (
+    !!record &&
+    typeof record === 'object' &&
+    'id' in record &&
+    'name' in record &&
+    'balance' in record
+  );
+};
