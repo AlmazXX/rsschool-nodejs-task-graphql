@@ -1,6 +1,14 @@
 import { PrismaClient } from '@prisma/client';
+import { GraphQLBoolean, GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import { Context } from '../context/context.js';
-import { IPost, PostInput } from '../types/posts.js';
+import {
+  IPost,
+  IPostInput,
+  PostInput,
+  PostType,
+  PostUpdateInput,
+} from '../types/posts.js';
+import { UUIDType } from '../types/uuid.js';
 
 export const posts = async (_, { prisma }: Context): Promise<IPost[]> => {
   return await prisma.post.findMany();
@@ -13,31 +21,48 @@ export const post = async (
   return await prisma.post.findUnique({ where: { id } });
 };
 
-export const createPost = async (
-  { dto: data }: { dto: PostInput },
-  { prisma }: Context,
-): Promise<IPost> => {
-  return await prisma.post.create({ data });
-};
-
-export const changePost = async (
-  { id, dto: data }: { id: string; dto: Partial<PostInput> },
-  { prisma }: Context,
-): Promise<IPost> => {
-  return await prisma.post.update({ where: { id }, data });
-};
-
-export const deletePost = async (
-  { id }: { id: string },
-  { prisma }: Context,
-): Promise<boolean> => {
-  try {
-    await prisma.post.delete({ where: { id } });
-    return true;
-  } catch {
-    return false;
-  }
-};
+export const PostMutations = new GraphQLObjectType({
+  name: 'PostMutations',
+  fields: () => ({
+    create: {
+      type: PostType,
+      args: {
+        dto: { type: new GraphQLNonNull(PostInput) },
+      },
+      resolve: async (_, { dto: data }: { dto: IPostInput }, { prisma }: Context) => {
+        return prisma.post.create({ data });
+      },
+    },
+    change: {
+      type: PostType,
+      args: {
+        id: { type: new GraphQLNonNull(UUIDType) },
+        dto: { type: new GraphQLNonNull(PostUpdateInput) },
+      },
+      resolve: async (
+        _,
+        { id, dto: data }: { id: string; dto: Partial<IPostInput> },
+        { prisma }: Context,
+      ) => {
+        return prisma.post.update({ where: { id }, data });
+      },
+    },
+    delete: {
+      type: new GraphQLNonNull(GraphQLBoolean),
+      args: {
+        id: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UUIDType))) },
+      },
+      resolve: async ({ id }: { id: string }, { prisma }: Context) => {
+        try {
+          await prisma.post.delete({ where: { id } });
+          return true;
+        } catch {
+          return false;
+        }
+      },
+    },
+  }),
+});
 
 export const batchPosts = async (authorIds: readonly string[], prisma: PrismaClient) => {
   const posts = await prisma.post.findMany({

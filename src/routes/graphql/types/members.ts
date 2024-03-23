@@ -1,6 +1,6 @@
 import { GraphQLEnumType, GraphQLFloat, GraphQLInt, GraphQLObjectType } from 'graphql';
 
-export enum MemberType {
+export enum IMemberType {
   BASIC = 'basic',
   BUSINESS = 'business',
 }
@@ -11,18 +11,18 @@ export interface IMember {
   postsLimitPerMonth: number;
 }
 
-export const membersEnum = new GraphQLEnumType({
+export const MEMBER_IDS = new GraphQLEnumType({
   name: 'MemberTypeId',
   values: {
-    [MemberType.BASIC]: { value: MemberType.BASIC },
-    [MemberType.BUSINESS]: { value: MemberType.BUSINESS },
+    [IMemberType.BASIC]: { value: IMemberType.BASIC },
+    [IMemberType.BUSINESS]: { value: IMemberType.BUSINESS },
   },
 });
 
-export const memberType = new GraphQLObjectType<IMember>({
+export const MemberType = new GraphQLObjectType<IMember>({
   name: 'Member',
   fields: () => ({
-    id: { type: membersEnum },
+    id: { type: MEMBER_IDS },
     discount: { type: GraphQLFloat },
     postsLimitPerMonth: { type: GraphQLInt },
   }),

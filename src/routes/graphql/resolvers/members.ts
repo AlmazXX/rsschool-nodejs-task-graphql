@@ -1,13 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import { Context } from '../context/context.js';
-import { IMember, MemberType } from '../types/members.js';
+import { IMember, IMemberType } from '../types/members.js';
 
 export const memberTypes = async (_, { prisma }: Context): Promise<IMember[]> => {
   return await prisma.memberType.findMany();
 };
 
 export const memberType = async (
-  { id }: { id: MemberType },
+  { id }: { id: IMemberType },
   { prisma }: Context,
 ): Promise<IMember | null> => {
   return await prisma.memberType.findUnique({ where: { id } });

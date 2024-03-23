@@ -5,7 +5,7 @@ import {
   GraphQLString,
 } from 'graphql';
 import { Context } from '../context/context.js';
-import { IUser, userType } from './users.js';
+import { IUser, UserType } from './users.js';
 import { UUIDType } from './uuid.js';
 
 export interface IPost {
@@ -15,9 +15,9 @@ export interface IPost {
   authorId: IUser['id'];
 }
 
-export type PostInput = Omit<IPost, 'id'>;
+export type IPostInput = Omit<IPost, 'id'>;
 
-export const postInput = new GraphQLInputObjectType({
+export const PostInput = new GraphQLInputObjectType({
   name: 'CreatePostInput',
   fields: () => ({
     title: { type: new GraphQLNonNull(GraphQLString) },
@@ -26,7 +26,7 @@ export const postInput = new GraphQLInputObjectType({
   }),
 });
 
-export const postUpdateInput = new GraphQLInputObjectType({
+export const PostUpdateInput = new GraphQLInputObjectType({
   name: 'ChangePostInput',
   fields: () => ({
     title: { type: GraphQLString },
@@ -34,14 +34,14 @@ export const postUpdateInput = new GraphQLInputObjectType({
   }),
 });
 
-export const postType = new GraphQLObjectType<IPost, Context>({
+export const PostType = new GraphQLObjectType<IPost, Context>({
   name: 'Post',
   fields: () => ({
     id: { type: UUIDType },
     title: { type: GraphQLString },
     content: { type: GraphQLString },
     author: {
-      type: userType,
+      type: UserType,
       async resolve({ authorId }, _, { usersLoader }) {
         return await usersLoader.load(authorId);
       },

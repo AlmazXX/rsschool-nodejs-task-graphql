@@ -6,8 +6,8 @@ import {
   GraphQLObjectType,
 } from 'graphql';
 import { Context } from '../context/context.js';
-import { memberType, membersEnum } from './members.js';
-import { IUser, userType } from './users.js';
+import { MemberType, MEMBER_IDS } from './members.js';
+import { IUser, UserType } from './users.js';
 import { UUIDType } from './uuid.js';
 
 export interface IProfile {
@@ -18,41 +18,41 @@ export interface IProfile {
   memberTypeId: string;
 }
 
-export type ProfileInput = Omit<IProfile, 'id'>;
+export type IProfileInput = Omit<IProfile, 'id'>;
 
-export const profileInput = new GraphQLInputObjectType({
+export const ProfileInput = new GraphQLInputObjectType({
   name: 'CreateProfileInput',
   fields: () => ({
     isMale: { type: new GraphQLNonNull(GraphQLBoolean) },
     yearOfBirth: { type: new GraphQLNonNull(GraphQLInt) },
     userId: { type: new GraphQLNonNull(UUIDType) },
-    memberTypeId: { type: new GraphQLNonNull(membersEnum) },
+    memberTypeId: { type: new GraphQLNonNull(MEMBER_IDS) },
   }),
 });
 
-export const profileUpdateInput = new GraphQLInputObjectType({
+export const ProfileUpdateInput = new GraphQLInputObjectType({
   name: 'ChangeProfileInput',
   fields: () => ({
     isMale: { type: GraphQLBoolean },
     yearOfBirth: { type: GraphQLInt },
-    memberTypeId: { type: membersEnum },
+    memberTypeId: { type: MEMBER_IDS },
   }),
 });
 
-export const profileType = new GraphQLObjectType<IProfile, Context>({
+export const ProfileType = new GraphQLObjectType<IProfile, Context>({
   name: 'Profile',
   fields: () => ({
     id: { type: UUIDType },
     isMale: { type: GraphQLBoolean },
     yearOfBirth: { type: GraphQLInt },
     user: {
-      type: userType,
+      type: UserType,
       async resolve({ userId }, _, { usersLoader }) {
         return await usersLoader.load(userId);
       },
     },
     memberType: {
-      type: memberType,
+      type: MemberType,
       async resolve({ memberTypeId }, _, { membersLoader }) {
         return await membersLoader.load(memberTypeId);
       },
