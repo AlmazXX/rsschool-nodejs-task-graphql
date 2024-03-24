@@ -11,17 +11,6 @@ import {
 } from '../types/profiles.js';
 import { UUIDType } from '../types/uuid.js';
 
-export const profiles = async (_, { prisma }: Context): Promise<IProfile[]> => {
-  return await prisma.profile.findMany();
-};
-
-export const profile = async (
-  { id }: { id: string },
-  { prisma }: Context,
-): Promise<IProfile | null> => {
-  return await prisma.profile.findUnique({ where: { id } });
-};
-
 export const ProfileMutations = new GraphQLObjectType({
   name: 'ProfileMutations',
   fields: () => ({

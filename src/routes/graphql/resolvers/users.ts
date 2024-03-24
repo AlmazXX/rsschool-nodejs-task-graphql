@@ -1,57 +1,10 @@
 import { PrismaClient } from '@prisma/client';
-import {
-  GraphQLList,
-  GraphQLNonNull,
-  GraphQLObjectType,
-  GraphQLResolveInfo,
-} from 'graphql';
-import { parseResolveInfo } from 'graphql-parse-resolve-info';
+import { GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import { HttpCompatibleError } from '../../../plugins/handle-http-error.js';
 import { Context } from '../context/context.js';
 import { Payload, PayloadType } from '../types/payload.js';
 import { IUser, IUserInput, UserInput, UserUpdateInput } from '../types/users.js';
 import { UUIDType } from '../types/uuid.js';
-
-export const users = async (
-  _,
-  { prisma, subscribersLoader, authorsLoader }: Context,
-  info: GraphQLResolveInfo,
-): Promise<IUser[]> => {
-  const parsedInfo = parseResolveInfo(info);
-
-  const includesSubscriber = Object.keys(
-    parsedInfo?.fieldsByTypeName?.User ?? {},
-  ).includes('subscribedToUser');
-  const includesAuthor = Object.keys(parsedInfo?.fieldsByTypeName?.User ?? {}).includes(
-    'userSubscribedTo',
-  );
-
-  const users = await prisma.user.findMany({
-    include: { subscribedToUser: includesSubscriber, userSubscribedTo: includesAuthor },
-  });
-
-  includesSubscriber &&
-    users.forEach((author) => {
-      const subscriberIds = author.subscribedToUser.map(
-        ({ subscriberId }) => subscriberId,
-      );
-      subscribersLoader.prime(
-        author.id,
-        users.filter((user) => subscriberIds.includes(user.id)),
-      );
-    });
-
-  includesAuthor &&
-    users.forEach((subscriber) => {
-      const authorIds = subscriber.userSubscribedTo.map(({ authorId }) => authorId);
-      authorsLoader.prime(
-        subscriber.id,
-        users.filter((user) => authorIds.includes(user.id)),
-      );
-    });
-
-  return users;
-};
 
 export const UserMutations = new GraphQLObjectType<unknown, Context>({
   name: 'UserMutations',

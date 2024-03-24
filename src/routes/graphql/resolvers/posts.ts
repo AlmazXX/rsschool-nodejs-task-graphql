@@ -6,17 +6,6 @@ import { Payload, PayloadType } from '../types/payload.js';
 import { IPost, IPostInput, PostInput, PostUpdateInput } from '../types/posts.js';
 import { UUIDType } from '../types/uuid.js';
 
-export const posts = async (_, { prisma }: Context): Promise<IPost[]> => {
-  return await prisma.post.findMany();
-};
-
-export const post = async (
-  { id }: { id: string },
-  { prisma }: Context,
-): Promise<IPost | null> => {
-  return await prisma.post.findUnique({ where: { id } });
-};
-
 export const PostMutations = new GraphQLObjectType({
   name: 'PostMutations',
   fields: () => ({
@@ -70,10 +59,10 @@ export const PostMutations = new GraphQLObjectType({
       args: {
         id: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UUIDType))) },
       },
-      resolve: async ({ id }: { id: string }, { prisma }: Context) => {
+      resolve: async (_, { id }: { id: string[] }, { prisma }: Context) => {
         const payload = Payload.withDefault();
         try {
-          await prisma.post.delete({ where: { id } });
+          await prisma.post.deleteMany({ where: { id: { in: id } } });
           payload.withSuccess();
         } catch (error) {
           if (error instanceof HttpCompatibleError) {
