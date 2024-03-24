@@ -59,3 +59,15 @@ export const ProfileType = new GraphQLObjectType<IProfile, Context>({
     },
   }),
 });
+
+export const isProfileRecord = (record: unknown): record is IProfile => {
+  return (
+    !!record &&
+    typeof record === 'object' &&
+    'id' in record &&
+    'isMale' in record &&
+    'yearOfBirth' in record &&
+    'userId' in record &&
+    'memberTypeId' in record
+  );
+};

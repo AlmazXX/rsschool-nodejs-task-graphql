@@ -3,6 +3,7 @@ import { HttpCompatibleError } from '../../../plugins/handle-http-error.js';
 import { query } from '../query.js';
 import { ErrorType } from './error.js';
 import { PostType, isPostRecord } from './posts.js';
+import { ProfileType, isProfileRecord } from './profiles.js';
 import { UserType, isUserRecord } from './users.js';
 import { UUIDType } from './uuid.js';
 
@@ -16,7 +17,7 @@ export class Payload {
   public status!: IPayloadStatus;
   public record!: unknown;
   public recordId!: string;
-  public error!: HttpCompatibleError;
+  public error: HttpCompatibleError = { message: '', httpCode: 400, name: '' };
   constructor() {}
 
   static withDefault() {
@@ -43,7 +44,9 @@ export class Payload {
   }
 
   withError(error: HttpCompatibleError) {
-    this.error = error;
+    this.error.message = error.message;
+    this.error.httpCode = error.httpCode;
+    this.error.name = error.name;
     return this;
   }
 }
@@ -58,13 +61,16 @@ export const PAYLOAD_STATUS = new GraphQLEnumType({
 
 const RecordUnion = new GraphQLUnionType({
   name: 'Record',
-  types: () => [UserType, PostType],
+  types: () => [UserType, PostType, ProfileType],
   resolveType: (value) => {
     if (isUserRecord(value)) {
       return 'User';
     }
     if (isPostRecord(value)) {
       return 'Post';
+    }
+    if (isProfileRecord(value)) {
+      return 'Profile';
     }
   },
 });

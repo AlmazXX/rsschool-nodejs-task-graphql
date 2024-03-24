@@ -1,11 +1,12 @@
 import { PrismaClient } from '@prisma/client';
-import { GraphQLBoolean, GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
+import { GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
+import { HttpCompatibleError } from '../../../plugins/handle-http-error.js';
 import { Context } from '../context/context.js';
+import { Payload, PayloadType } from '../types/payload.js';
 import {
   IProfile,
   IProfileInput,
   ProfileInput,
-  ProfileType,
   ProfileUpdateInput,
 } from '../types/profiles.js';
 import { UUIDType } from '../types/uuid.js';
@@ -25,38 +26,69 @@ export const ProfileMutations = new GraphQLObjectType({
   name: 'ProfileMutations',
   fields: () => ({
     create: {
-      type: ProfileType,
+      type: new GraphQLNonNull(PayloadType),
       args: {
         dto: {
           type: new GraphQLNonNull(ProfileInput),
         },
       },
       resolve: async (_, { dto: data }: { dto: IProfileInput }, { prisma }: Context) => {
-        return prisma.profile.create({ data });
+        const payload = Payload.withDefault();
+        try {
+          const item = await prisma.profile.create({ data });
+          payload.withSuccess();
+          payload.withRecord(item);
+        } catch (error) {
+          if (error instanceof HttpCompatibleError) {
+            payload.withFail();
+            payload.withError(error);
+          }
+        }
+        return payload;
       },
     },
     change: {
-      type: ProfileType,
+      type: new GraphQLNonNull(PayloadType),
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
         dto: { type: new GraphQLNonNull(ProfileUpdateInput) },
       },
-      resolve: async (_, { dto: data }: { dto: IProfileInput }, { prisma }: Context) => {
-        return prisma.profile.create({ data });
+      resolve: async (
+        _,
+        { id, dto: data }: { id: string; dto: IProfileInput },
+        { prisma }: Context,
+      ) => {
+        const payload = Payload.withDefault();
+        try {
+          const item = await prisma.profile.update({ where: { id }, data });
+          payload.withSuccess();
+          payload.withRecord(item);
+        } catch (error) {
+          if (error instanceof HttpCompatibleError) {
+            payload.withFail();
+            payload.withError(error);
+          }
+        }
+        return payload;
       },
     },
     delete: {
-      type: new GraphQLNonNull(GraphQLBoolean),
+      type: new GraphQLNonNull(PayloadType),
       args: {
         id: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UUIDType))) },
       },
-      resolve: async (_, { id }: { id: string }, { prisma }: Context) => {
+      resolve: async (_, { id }: { id: string[] }, { prisma }: Context) => {
+        const payload = Payload.withDefault();
         try {
-          await prisma.profile.deleteMany({ where: { id } });
-          return true;
-        } catch {
-          return false;
+          await prisma.profile.deleteMany({ where: { id: { in: id } } });
+          payload.withSuccess();
+        } catch (error) {
+          if (error instanceof HttpCompatibleError) {
+            payload.withFail();
+            payload.withError(error);
+          }
         }
+        return payload;
       },
     },
   }),
