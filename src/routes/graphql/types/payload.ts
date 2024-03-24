@@ -2,7 +2,7 @@ import { GraphQLEnumType, GraphQLObjectType, GraphQLUnionType } from 'graphql';
 import { HttpCompatibleError } from '../../../plugins/handle-http-error.js';
 import { query } from '../query.js';
 import { ErrorType } from './error.js';
-import { PostType } from './posts.js';
+import { PostType, isPostRecord } from './posts.js';
 import { UserType, isUserRecord } from './users.js';
 import { UUIDType } from './uuid.js';
 
@@ -62,6 +62,9 @@ const RecordUnion = new GraphQLUnionType({
   resolveType: (value) => {
     if (isUserRecord(value)) {
       return 'User';
+    }
+    if (isPostRecord(value)) {
+      return 'Post';
     }
   },
 });
