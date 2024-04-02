@@ -6,7 +6,7 @@ import {
   GraphQLObjectType,
 } from 'graphql';
 import { Context } from '../context/context.js';
-import { MemberType, MEMBER_IDS } from './members.js';
+import { MEMBER_IDS, MemberType } from './members.js';
 import { IUser, UserType } from './users.js';
 import { UUIDType } from './uuid.js';
 
@@ -47,15 +47,12 @@ export const ProfileType = new GraphQLObjectType<IProfile, Context>({
     yearOfBirth: { type: GraphQLInt },
     user: {
       type: UserType,
-      async resolve({ userId }, _, { usersLoader }) {
-        return await usersLoader.load(userId);
-      },
+      resolve: ({ userId }, _, { usersLoader }) => usersLoader.load(userId),
     },
     memberType: {
       type: MemberType,
-      async resolve({ memberTypeId }, _, { membersLoader }) {
-        return await membersLoader.load(memberTypeId);
-      },
+      resolve: ({ memberTypeId }, _, { membersLoader }) =>
+        membersLoader.load(memberTypeId),
     },
   }),
 });

@@ -1,9 +1,13 @@
 import { PrismaClient } from '@prisma/client';
 import DataLoader from 'dataloader';
-import { batchMembers } from '../resolvers/members.js';
-import { batchPosts } from '../resolvers/posts.js';
-import { batchProfiles } from '../resolvers/profiles.js';
-import { batchAuthors, batchSubscribers, batchUsers } from '../resolvers/users.js';
+import { batchMembers } from '../dataloader-batchers/members.js';
+import { batchPosts } from '../dataloader-batchers/posts.js';
+import { batchProfiles } from '../dataloader-batchers/profiles.js';
+import {
+  batchAuthors,
+  batchSubscribers,
+  batchUsers,
+} from '../dataloader-batchers/users.js';
 import { IMember } from '../types/members.js';
 import { IPost } from '../types/posts.js';
 import { IProfile } from '../types/profiles.js';

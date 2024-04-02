@@ -1,7 +1,7 @@
 import { GraphQLObjectType } from 'graphql';
-import { PostMutations } from './resolvers/posts.js';
-import { ProfileMutations } from './resolvers/profiles.js';
-import { UserMutations } from './resolvers/users.js';
+import { PostMutations } from './mutations/posts.js';
+import { ProfileMutations } from './mutations/profiles.js';
+import { UserMutations } from './mutations/users.js';
 
 export const mutation = new GraphQLObjectType({
   name: 'Mutation',

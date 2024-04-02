@@ -42,9 +42,7 @@ export const PostType = new GraphQLObjectType<IPost, Context>({
     content: { type: GraphQLString },
     author: {
       type: UserType,
-      async resolve({ authorId }, _, { usersLoader }) {
-        return await usersLoader.load(authorId);
-      },
+      resolve: ({ authorId }, _, { usersLoader }) => usersLoader.load(authorId),
     },
   }),
 });

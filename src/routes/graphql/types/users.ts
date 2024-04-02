@@ -46,27 +46,19 @@ export const UserType: GraphQLObjectType<IUser, Context> = new GraphQLObjectType
     balance: { type: GraphQLFloat },
     posts: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(PostType))),
-      async resolve({ id }, _, { postsLoader }) {
-        return await postsLoader.load(id);
-      },
+      resolve: ({ id }, _, { postsLoader }) => postsLoader.load(id),
     },
     profile: {
       type: ProfileType,
-      async resolve({ id }, _, { profilesLoader }) {
-        return await profilesLoader.load(id);
-      },
+      resolve: ({ id }, _, { profilesLoader }) => profilesLoader.load(id),
     },
     subscribedToUser: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
-      async resolve({ id }, _, { subscribersLoader }) {
-        return subscribersLoader.load(id);
-      },
+      resolve: ({ id }, _, { subscribersLoader }) => subscribersLoader.load(id),
     },
     userSubscribedTo: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
-      async resolve({ id }, _, { authorsLoader }) {
-        return authorsLoader.load(id);
-      },
+      resolve: ({ id }, _, { authorsLoader }) => authorsLoader.load(id),
     },
   }),
 });

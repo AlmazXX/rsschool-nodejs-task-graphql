@@ -10,7 +10,6 @@ export const FilterInput = new GraphQLInputObjectType({
   fields: () => ({
     id: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UUIDType))),
-      defaultValue: [],
     },
   }),
 });

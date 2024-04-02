@@ -1,36 +1,35 @@
-import { PrismaClient } from '@prisma/client';
 import { GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import { HttpCompatibleError } from '../../../plugins/handle-http-error.js';
 import { Context } from '../context/context.js';
-import { Payload, PayloadType } from '../types/payload.js';
-import { IPost, IPostInput, PostInput, PostUpdateInput } from '../types/posts.js';
+import {
+  ErrorPayload,
+  PayloadInterface,
+  SuccessMutationPayload,
+} from '../types/payload.js';
+import { IPostInput, PostInput, PostUpdateInput } from '../types/posts.js';
 import { UUIDType } from '../types/uuid.js';
 
 export const PostMutations = new GraphQLObjectType({
   name: 'PostMutations',
   fields: () => ({
     create: {
-      type: new GraphQLNonNull(PayloadType),
+      type: PayloadInterface,
       args: {
         dto: { type: new GraphQLNonNull(PostInput) },
       },
       resolve: async (_, { dto: data }: { dto: IPostInput }, { prisma }: Context) => {
-        const payload = Payload.withDefault();
         try {
           const item = await prisma.post.create({ data });
-          payload.withSuccess();
-          payload.withRecord(item);
+          return new SuccessMutationPayload().withRecord(item);
         } catch (error) {
           if (error instanceof HttpCompatibleError) {
-            payload.withFail();
-            payload.withError(error);
+            return new ErrorPayload().withError(error);
           }
         }
-        return payload;
       },
     },
     change: {
-      type: new GraphQLNonNull(PayloadType),
+      type: PayloadInterface,
       args: {
         id: { type: new GraphQLNonNull(UUIDType) },
         dto: { type: new GraphQLNonNull(PostUpdateInput) },
@@ -40,52 +39,31 @@ export const PostMutations = new GraphQLObjectType({
         { id, dto: data }: { id: string; dto: Partial<IPostInput> },
         { prisma }: Context,
       ) => {
-        const payload = Payload.withDefault();
         try {
           const item = await prisma.post.update({ where: { id }, data });
-          payload.withSuccess();
-          payload.withRecord(item);
+          return new SuccessMutationPayload().withRecord(item);
         } catch (error) {
           if (error instanceof HttpCompatibleError) {
-            payload.withFail();
-            payload.withError(error);
+            return new ErrorPayload().withError(error);
           }
         }
-        return payload;
       },
     },
     delete: {
-      type: new GraphQLNonNull(PayloadType),
+      type: PayloadInterface,
       args: {
         id: { type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UUIDType))) },
       },
       resolve: async (_, { id }: { id: string[] }, { prisma }: Context) => {
-        const payload = Payload.withDefault();
         try {
           await prisma.post.deleteMany({ where: { id: { in: id } } });
-          payload.withSuccess();
+          return new SuccessMutationPayload();
         } catch (error) {
           if (error instanceof HttpCompatibleError) {
-            payload.withFail();
-            payload.withError(error);
+            return new ErrorPayload().withError(error);
           }
         }
-        return payload;
       },
     },
   }),
 });
-
-export const batchPosts = async (authorIds: readonly string[], prisma: PrismaClient) => {
-  const posts = await prisma.post.findMany({
-    where: { authorId: { in: <string[]>authorIds } },
-  });
-
-  const mappedPosts = posts.reduce<Record<string, IPost[]>>((acc, post) => {
-    const { authorId } = post;
-    acc[authorId] ? acc[authorId].push(post) : (acc[authorId] = [post]);
-    return acc;
-  }, {});
-
-  return authorIds.map((id) => mappedPosts[id] ?? []);
-};
