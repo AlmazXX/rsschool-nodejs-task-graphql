@@ -1,104 +1,186 @@
+import { Prisma } from '@prisma/client';
 import { GraphQLList, GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import { parseResolveInfo } from 'graphql-parse-resolve-info';
+import { HttpCompatibleError } from '../../plugins/handle-http-error.js';
 import { Context } from './context/context.js';
 import { FilterInput, IFilter } from './types/filter.js';
 import { IMemberType, MEMBER_IDS, MemberType } from './types/members.js';
-import { PostType } from './types/posts.js';
-import { ProfileType } from './types/profiles.js';
-import { UserType } from './types/users.js';
+import { IPagination, Pagination, PaginationInputType } from './types/page.js';
+import { ErrorPayload, PayloadInterface, SuccessQueryPayload } from './types/payload.js';
 
-export const query = new GraphQLObjectType<unknown, Context>({
+export const query = new GraphQLObjectType({
   name: 'Query',
   fields: () => ({
     users: {
-      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(UserType))),
+      type: PayloadInterface,
       args: {
         filter: { type: FilterInput },
+        pagination: {
+          type: PaginationInputType,
+          defaultValue: { page: 1, perPage: 10 },
+        },
       },
       resolve: async (
         _,
-        { filter }: { filter: IFilter },
-        { prisma, subscribersLoader, authorsLoader },
+        { filter, pagination }: { filter: IFilter; pagination: IPagination },
+        { prisma, authorsLoader, subscribersLoader }: Context,
         info,
       ) => {
-        const parsedInfo = parseResolveInfo(info);
+        try {
+          const parsedInfo = parseResolveInfo(info);
 
-        const includesSubscriber = Object.keys(
-          parsedInfo?.fieldsByTypeName?.User ?? {},
-        ).includes('subscribedToUser');
-        const includesAuthor = Object.keys(
-          parsedInfo?.fieldsByTypeName?.User ?? {},
-        ).includes('userSubscribedTo');
+          const includesSubscriber = Object.keys(
+            parsedInfo?.fieldsByTypeName?.User ?? {},
+          ).includes('subscribedToUser');
+          const includesAuthor = Object.keys(
+            parsedInfo?.fieldsByTypeName?.User ?? {},
+          ).includes('userSubscribedTo');
 
-        const users = filter
-          ? await prisma.user.findMany({
-              where: { id: { in: filter.id } },
-              include: {
-                subscribedToUser: includesSubscriber,
-                userSubscribedTo: includesAuthor,
-              },
-            })
-          : await prisma.user.findMany({
-              include: {
-                subscribedToUser: includesSubscriber,
-                userSubscribedTo: includesAuthor,
-              },
+          const where = filter
+            ? ({ id: { in: filter.id } } satisfies Prisma.UserWhereInput)
+            : {};
+          const include = {
+            subscribedToUser: includesSubscriber,
+            userSubscribedTo: includesAuthor,
+          };
+          const skip = Pagination.skip(pagination);
+          const take = pagination.perPage;
+
+          const { 0: users, 1: totalItems } = await prisma.$transaction([
+            prisma.user.findMany({
+              where,
+              include,
+              skip,
+              take,
+            }),
+            prisma.user.count({ where }),
+          ]);
+
+          includesSubscriber &&
+            users.forEach((author) => {
+              const subscriberIds = author.subscribedToUser.map(
+                ({ subscriberId }) => subscriberId,
+              );
+              subscribersLoader.prime(
+                author.id,
+                users.filter((user) => subscriberIds.includes(user.id)),
+              );
             });
 
-        includesSubscriber &&
-          users.forEach((author) => {
-            const subscriberIds = author.subscribedToUser.map(
-              ({ subscriberId }) => subscriberId,
-            );
-            subscribersLoader.prime(
-              author.id,
-              users.filter((user) => subscriberIds.includes(user.id)),
-            );
-          });
+          includesAuthor &&
+            users.forEach((subscriber) => {
+              const authorIds = subscriber.userSubscribedTo.map(
+                ({ authorId }) => authorId,
+              );
+              authorsLoader.prime(
+                subscriber.id,
+                users.filter((user) => authorIds.includes(user.id)),
+              );
+            });
 
-        includesAuthor &&
-          users.forEach((subscriber) => {
-            const authorIds = subscriber.userSubscribedTo.map(({ authorId }) => authorId);
-            authorsLoader.prime(
-              subscriber.id,
-              users.filter((user) => authorIds.includes(user.id)),
-            );
-          });
-
-        return users;
+          return new SuccessQueryPayload()
+            .withItems(users)
+            .withPagination({ totalItems, ...pagination });
+        } catch (error) {
+          if (error instanceof HttpCompatibleError) {
+            return new ErrorPayload().withError(error);
+          }
+        }
       },
     },
     posts: {
-      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(PostType))),
+      type: PayloadInterface,
       args: {
         filter: { type: FilterInput },
+        pagination: {
+          type: PaginationInputType,
+          defaultValue: { page: 1, perPage: 10 },
+        },
       },
-      resolve: (_, { filter }: { filter: IFilter }, { prisma }) =>
-        filter
-          ? prisma.post.findMany({ where: { id: { in: filter.id } } })
-          : prisma.post.findMany(),
+      resolve: async (
+        _,
+        { filter, pagination }: { filter: IFilter; pagination: IPagination },
+        { prisma }: Context,
+      ) => {
+        try {
+          const where = filter
+            ? ({ id: { in: filter.id } } satisfies Prisma.PostWhereInput)
+            : {};
+          const skip = Pagination.skip(pagination);
+          const take = pagination.perPage;
+
+          const { 0: posts, 1: totalItems } = await prisma.$transaction([
+            prisma.post.findMany({
+              where,
+              skip,
+              take,
+            }),
+            prisma.post.count({ where }),
+          ]);
+
+          return new SuccessQueryPayload()
+            .withItems(posts)
+            .withPagination({ totalItems, ...pagination });
+        } catch (error) {
+          if (error instanceof HttpCompatibleError) {
+            return new ErrorPayload().withError(error);
+          }
+        }
+      },
     },
     memberTypes: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(MemberType))),
-      resolve: (_src, _args, { prisma }) => prisma.memberType.findMany(),
+      resolve: (_, { prisma }: Context) => {
+        return prisma.memberType.findMany();
+      },
     },
     memberType: {
       type: new GraphQLNonNull(MemberType),
       args: {
         id: { type: MEMBER_IDS },
       },
-      resolve: (_, { id }: { id: IMemberType }, { prisma }) =>
-        prisma.memberType.findUnique({ where: { id } }),
+      resolve: (_, { id }: { id: IMemberType }, { prisma }: Context) => {
+        return prisma.memberType.findUnique({ where: { id } });
+      },
     },
     profiles: {
-      type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(ProfileType))),
+      type: PayloadInterface,
       args: {
         filter: { type: FilterInput },
+        pagination: {
+          type: PaginationInputType,
+          defaultValue: { page: 1, perPage: 10 },
+        },
       },
-      resolve: (_, { filter }: { filter: IFilter }, { prisma }) =>
-        filter
-          ? prisma.profile.findMany({ where: { id: { in: filter.id } } })
-          : prisma.profile.findMany(),
+      resolve: async (
+        { filter, pagination }: { filter: IFilter; pagination: IPagination },
+        { prisma }: Context,
+      ) => {
+        try {
+          const where = filter
+            ? ({ id: { in: filter.id } } satisfies Prisma.ProfileWhereInput)
+            : {};
+          const skip = Pagination.skip(pagination);
+          const take = pagination.perPage;
+
+          const { 0: profiles, 1: totalItems } = await prisma.$transaction([
+            prisma.profile.findMany({
+              where,
+              skip,
+              take,
+            }),
+            prisma.profile.count({ where }),
+          ]);
+
+          return new SuccessQueryPayload()
+            .withItems(profiles)
+            .withPagination({ totalItems, ...pagination });
+        } catch (error) {
+          if (error instanceof HttpCompatibleError) {
+            return new ErrorPayload().withError(error);
+          }
+        }
+      },
     },
   }),
 });
