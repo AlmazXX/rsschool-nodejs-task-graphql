@@ -72,32 +72,30 @@ Fetch Users
 
 This query retrieves a paginated list of users and their associated data:
 
-```json
-{
-   "query": "query FetchUsers {
-      users {
-         status
-         ...on SuccessQueryPayload {
-            items {
-               ...on User {
+```
+query FetchUsers {
+   users {
+      status
+      ...on SuccessQueryPayload {
+         items {
+            ...on User {
+               id
+               name
+               balance
+               posts {
                   id
-                  name
-                  balance
-                  posts {
-                     id
-                     title
-                  }
+                  title
                }
             }
          }
-         ...on ErrorPayload {
-            error {
-               message
-               httpCode
-            }
+      }
+      ...on ErrorPayload {
+         error {
+            message
+            httpCode
          }
       }
-   }"
+   }
 }
 ```
 
@@ -105,78 +103,86 @@ This query retrieves a paginated list of users and their associated data:
 
 Fetch users with pagination:
 
-```json
-{
-   "query": "query FetchUsers($page: Int!, $perPage: Int!) {
-      users(pagination: { page: $page, perPage: $perPage }) {
-         status
-         ...on SuccessQueryPayload {
-            items {
-               ...on User {
-                  id
-                  name
-                  balance
-               }
-            }
-            pagination {
-               totalItems
-               totalPages
-               page
-               perPage
-               hasNextPage
-               hasPreviousPage
+```
+query FetchUsers($page: Int!, $perPage: Int!) {
+   users( pagination: { page: $page, perPage: $perPage }) {
+      status
+      ...on SuccessQueryPayload {
+         items {
+            ...on User {
+               id
+               name
+               balance
             }
          }
-         ...on ErrorPayload {
-            error {
-               message
-               httpCode
-            }
+         pagination {
+            totalItems
+            totalPages
+            page
+            perPage
+            hasNextPage
+            hasPreviousPage
          }
       }
-   }",
-   "variables": {
-      "page": 1,
-      "perPage": 10
-  }
+      ...on ErrorPayload {
+         error {
+            message
+            httpCode
+         }
+      }
+   }
 }
+```
 
+### Variables:
+
+```json
+{
+  "page": 1,
+  "perPage": 10
+}
 ```
 
 ### Fetch User by ID
 
-```json
-{
-   "query": "query FetchUser($userId: [UUID!]!) {
-      users(filter: { id: $userId }) {
-         status
-         ...on SuccessQueryPayload {
-            items {
-               ...on User {
-                  id
-                  name
-                  balance
-               }
-            }
-            pagination {
-               totalItems
-               page
-               perPage
+```
+query FetchUser($userId: [UUID!]!) {
+   users(filter: { id: $userId }) {
+      status
+      ...on SuccessQueryPayload {
+         items {
+            ...on User {
+               id
+               name
+               balance
             }
          }
-         ...on ErrorPayload {
-            error {
-               message
-               httpCode
-            }
+         pagination {
+            totalItems
+            page
+            perPage
          }
       }
-   }",
-   "variables": {
-      "userId": "8fc48edb-58ed-48d0-a0b9-ccba87da7af5",
-      // or
-      "userId": ["8fc48edb-58ed-48d0-a0b9-ccba87da7af5", "8fc48edb-58ed-48d0-a0b9-ccba87da7af6"]
+      ...on ErrorPayload {
+         error {
+            message
+            httpCode
+         }
+      }
    }
+}
+```
+
+### Variables:
+
+```json
+{
+  "userId": "8fc48edb-58ed-48d0-a0b9-ccba87da7af5",
+  // or
+  "userId": [
+    "8fc48edb-58ed-48d0-a0b9-ccba87da7af5",
+    "8fc48edb-58ed-48d0-a0b9-ccba87da7af6"
+  ]
 }
 ```
 
@@ -184,61 +190,70 @@ Fetch users with pagination:
 
 ### Create User
 
-```json
-{
-   "query": "mutation CreateUser($dto: CreateUserInput!) {
-      user {
-         create(dto: $dto) {
-            status
-            ...on SuccessMutationPayload {
-               record {
-                  ...on User {
-                     id
-                     balance
-                     name
-                  }
-               }
-            }
-            ...on ErrorPayload {
-               error {
-                  message
-                  httpCode
+```
+mutation CreateUser($dto: CreateUserInput!) {
+   user {
+      create(dto: $dto) {
+         status
+         ...on SuccessMutationPayload {
+            record {
+               ...on User {
+                  id
+                  balance
+                  name
                }
             }
          }
-      }
-   }",
-   "variables": {
-      "input": {
-         "name": "Alice",
-         "balance": 100.0
+         ...on ErrorPayload {
+            error {
+               message
+               httpCode
+            }
+         }
       }
    }
 }
 ```
 
-### Delete User
+### Variables:
 
 ```json
 {
-   "query": "mutation DeleteUser($userId: [UUID!]!) {
-      user {
-         delete(id: $userId) {
-            status
-            ...on ErrorPayload {
-               error {
-                  message
-                  httpCode
-               }
+  "dto": {
+    "name": "Alice",
+    "balance": 100.0
+  }
+}
+```
+
+### Delete User
+
+```
+mutation DeleteUser($userId: [UUID!]!) {
+   user {
+      delete(id: $userId) {
+         status
+         ...on ErrorPayload {
+            error {
+               message
+               httpCode
             }
          }
       }
-   }",
-   "variables": {
-      "userId": "8fc48edb-58ed-48d0-a0b9-ccba87da7af5",
-      // or
-      "userId": ["8fc48edb-58ed-48d0-a0b9-ccba87da7af5", "8fc48edb-58ed-48d0-a0b9-ccba87da7af6"]
    }
+}
+```
+
+### Variables:
+
+```json
+{
+  "userId": "8fc48edb-58ed-48d0-a0b9-ccba87da7af5",
+  // or
+  "userId": [
+    "8fc48edb-58ed-48d0-a0b9-ccba87da7af5",
+    "8fc48edb-58ed-48d0-a0b9-ccba87da7af6"
+  ]
 }
 ```
 
