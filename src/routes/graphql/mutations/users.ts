@@ -22,11 +22,15 @@ export const UserMutations = new GraphQLObjectType<unknown, Context>({
       resolve: async (_, { dto: data }: { dto: IUserInput }, { prisma }) => {
         try {
           const item = await prisma.user.create({ data });
-          return new SuccessMutationPayload().withRecord(item);
+          return new SuccessMutationPayload().withRecord({
+            ...item,
+            __typename: 'User',
+          });
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },
@@ -43,11 +47,15 @@ export const UserMutations = new GraphQLObjectType<unknown, Context>({
       ) => {
         try {
           const item = await prisma.user.update({ where: { id }, data });
-          return new SuccessMutationPayload().withRecord(item);
+          return new SuccessMutationPayload().withRecord({
+            ...item,
+            __typename: 'User',
+          });
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },
@@ -61,9 +69,10 @@ export const UserMutations = new GraphQLObjectType<unknown, Context>({
           await prisma.user.deleteMany({ where: { id: { in: id } } });
           return new SuccessMutationPayload();
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },
@@ -83,11 +92,15 @@ export const UserMutations = new GraphQLObjectType<unknown, Context>({
             where: { id },
             data: { userSubscribedTo: { create: { authorId } } },
           });
-          return new SuccessMutationPayload().withRecord(item);
+          return new SuccessMutationPayload().withRecord({
+            ...item,
+            __typename: 'User',
+          });
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },
@@ -108,9 +121,10 @@ export const UserMutations = new GraphQLObjectType<unknown, Context>({
           });
           return new SuccessMutationPayload();
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },

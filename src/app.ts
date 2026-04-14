@@ -9,9 +9,8 @@ const __dirname = dirname(__filename);
 const opts: Partial<AutoloadPluginOptions> = {
   ignoreFilter: (path: string) => {
     const isFileNested = (path.match(new RegExp('/', 'g')) ?? []).length > 1;
-    if (!isFileNested) {
-      return false;
-    }
+    if (!isFileNested) return false;
+
     return !path.endsWith('index.js');
   },
   forceESM: true,

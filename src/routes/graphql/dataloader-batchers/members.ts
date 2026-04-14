@@ -9,13 +9,10 @@ export const batchMembers = async (
     where: { profiles: { some: { memberTypeId: { in: <string[]>memberTypeIds } } } },
   });
 
-  const mappedMemberTypes = memberTypes.reduce<Record<string, IMember>>(
-    (acc, memberType) => {
-      acc[memberType.id] = memberType;
-      return acc;
-    },
-    {},
-  );
+  const memberTypesMap = memberTypes.reduce((acc, memberType) => {
+    acc.set(memberType.id, memberType);
+    return acc;
+  }, new Map<string, IMember>());
 
-  return memberTypeIds.map((id) => mappedMemberTypes[id] ?? null);
+  return memberTypeIds.map((id) => memberTypesMap.get(id) ?? null);
 };

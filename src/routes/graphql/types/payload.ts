@@ -10,9 +10,9 @@ import { HttpCompatibleError } from '../../../plugins/handle-http-error.js';
 import { query } from '../query.js';
 import { ErrorType } from './error.js';
 import { Pagination, PaginationType } from './page.js';
-import { PostType, isPostRecord } from './posts.js';
-import { ProfileType, isProfileRecord } from './profiles.js';
-import { UserType, isUserRecord } from './users.js';
+import { PostType } from './posts.js';
+import { ProfileType } from './profiles.js';
+import { UserType } from './users.js';
 import { UUIDType } from './uuid.js';
 
 export enum IPayloadStatus {
@@ -112,17 +112,7 @@ export const PAYLOAD_STATUS = new GraphQLEnumType({
 const RecordUnion = new GraphQLUnionType({
   name: 'Record',
   types: () => [UserType, PostType, ProfileType],
-  resolveType: (value) => {
-    if (isUserRecord(value)) {
-      return 'User';
-    }
-    if (isPostRecord(value)) {
-      return 'Post';
-    }
-    if (isProfileRecord(value)) {
-      return 'Profile';
-    }
-  },
+  resolveType: (value: { __typename: string }) => value.__typename,
 });
 
 export const PayloadInterface = new GraphQLInterfaceType({
@@ -131,15 +121,10 @@ export const PayloadInterface = new GraphQLInterfaceType({
     status: { type: PAYLOAD_STATUS },
   }),
   resolveType: (value) => {
-    if (value instanceof SuccessMutationPayload) {
-      return 'SuccessMutationPayload';
-    }
-    if (value instanceof SuccessQueryPayload) {
-      return 'SuccessQueryPayload';
-    }
-    if (value instanceof ErrorPayload) {
-      return 'ErrorPayload';
-    }
+    if (value instanceof SuccessMutationPayload) return 'SuccessMutationPayload';
+    if (value instanceof SuccessQueryPayload) return 'SuccessQueryPayload';
+    if (value instanceof ErrorPayload) return 'ErrorPayload';
+
     return undefined;
   },
 });

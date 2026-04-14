@@ -8,6 +8,11 @@ import { IMemberType, MEMBER_IDS, MemberType } from './types/members.js';
 import { IPagination, Pagination, PaginationInputType } from './types/page.js';
 import { ErrorPayload, PayloadInterface, SuccessQueryPayload } from './types/payload.js';
 
+interface ListQueryParams {
+  filter: IFilter;
+  pagination: IPagination;
+}
+
 export const query = new GraphQLObjectType({
   name: 'Query',
   fields: () => ({
@@ -22,7 +27,7 @@ export const query = new GraphQLObjectType({
       },
       resolve: async (
         _,
-        { filter, pagination }: { filter: IFilter; pagination: IPagination },
+        { filter, pagination }: ListQueryParams,
         { prisma, authorsLoader, subscribersLoader }: Context,
         info,
       ) => {
@@ -79,12 +84,13 @@ export const query = new GraphQLObjectType({
             });
 
           return new SuccessQueryPayload()
-            .withItems(users)
+            .withItems(users.map((u) => ({ ...u, __typename: 'User' })))
             .withPagination({ totalItems, ...pagination });
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },
@@ -99,7 +105,7 @@ export const query = new GraphQLObjectType({
       },
       resolve: async (
         _,
-        { filter, pagination }: { filter: IFilter; pagination: IPagination },
+        { filter, pagination }: ListQueryParams,
         { prisma }: Context,
       ) => {
         try {
@@ -119,29 +125,27 @@ export const query = new GraphQLObjectType({
           ]);
 
           return new SuccessQueryPayload()
-            .withItems(posts)
+            .withItems(posts.map((p) => ({ ...p, __typename: 'Post' })))
             .withPagination({ totalItems, ...pagination });
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },
     memberTypes: {
       type: new GraphQLNonNull(new GraphQLList(new GraphQLNonNull(MemberType))),
-      resolve: (_, { prisma }: Context) => {
-        return prisma.memberType.findMany();
-      },
+      resolve: (_source, _args, { prisma }: Context) => prisma.memberType.findMany(),
     },
     memberType: {
       type: new GraphQLNonNull(MemberType),
       args: {
         id: { type: MEMBER_IDS },
       },
-      resolve: (_, { id }: { id: IMemberType }, { prisma }: Context) => {
-        return prisma.memberType.findUnique({ where: { id } });
-      },
+      resolve: (_, { id }: { id: IMemberType }, { prisma }: Context) =>
+        prisma.memberType.findUnique({ where: { id } }),
     },
     profiles: {
       type: PayloadInterface,
@@ -153,7 +157,8 @@ export const query = new GraphQLObjectType({
         },
       },
       resolve: async (
-        { filter, pagination }: { filter: IFilter; pagination: IPagination },
+        _,
+        { filter, pagination }: ListQueryParams,
         { prisma }: Context,
       ) => {
         try {
@@ -173,12 +178,13 @@ export const query = new GraphQLObjectType({
           ]);
 
           return new SuccessQueryPayload()
-            .withItems(profiles)
+            .withItems(profiles.map((p) => ({ ...p, __typename: 'Profile' })))
             .withPagination({ totalItems, ...pagination });
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },

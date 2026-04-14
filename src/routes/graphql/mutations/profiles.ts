@@ -22,11 +22,15 @@ export const ProfileMutations = new GraphQLObjectType({
       resolve: async (_, { dto: data }: { dto: IProfileInput }, { prisma }: Context) => {
         try {
           const item = await prisma.profile.create({ data });
-          return new SuccessMutationPayload().withRecord(item);
+          return new SuccessMutationPayload().withRecord({
+            ...item,
+            __typename: 'Profile',
+          });
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },
@@ -43,11 +47,15 @@ export const ProfileMutations = new GraphQLObjectType({
       ) => {
         try {
           const item = await prisma.profile.update({ where: { id }, data });
-          return new SuccessMutationPayload().withRecord(item);
+          return new SuccessMutationPayload().withRecord({
+            ...item,
+            __typename: 'Profile',
+          });
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },
@@ -61,9 +69,10 @@ export const ProfileMutations = new GraphQLObjectType({
           await prisma.profile.deleteMany({ where: { id: { in: id } } });
           return new SuccessMutationPayload();
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },

@@ -16,9 +16,9 @@ import { IUser } from '../types/users.js';
 export interface Context {
   prisma: PrismaClient;
   postsLoader: DataLoader<string, IPost[]>;
-  profilesLoader: DataLoader<string, IProfile>;
-  membersLoader: DataLoader<string, IMember>;
-  usersLoader: DataLoader<string, IUser>;
+  profilesLoader: DataLoader<string, IProfile | null>;
+  membersLoader: DataLoader<string, IMember | null>;
+  usersLoader: DataLoader<string, IUser | null>;
   subscribersLoader: DataLoader<string, IUser[]>;
   authorsLoader: DataLoader<string, IUser[]>;
 }

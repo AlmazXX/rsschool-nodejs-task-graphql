@@ -20,11 +20,12 @@ export const PostMutations = new GraphQLObjectType({
       resolve: async (_, { dto: data }: { dto: IPostInput }, { prisma }: Context) => {
         try {
           const item = await prisma.post.create({ data });
-          return new SuccessMutationPayload().withRecord(item);
+          return new SuccessMutationPayload().withRecord({ ...item, __typename: 'Post' });
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },
@@ -41,11 +42,12 @@ export const PostMutations = new GraphQLObjectType({
       ) => {
         try {
           const item = await prisma.post.update({ where: { id }, data });
-          return new SuccessMutationPayload().withRecord(item);
+          return new SuccessMutationPayload().withRecord({ ...item, __typename: 'Post' });
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },
@@ -59,9 +61,10 @@ export const PostMutations = new GraphQLObjectType({
           await prisma.post.deleteMany({ where: { id: { in: id } } });
           return new SuccessMutationPayload();
         } catch (error) {
-          if (error instanceof HttpCompatibleError) {
+          if (error instanceof HttpCompatibleError)
             return new ErrorPayload().withError(error);
-          }
+
+          throw error;
         }
       },
     },

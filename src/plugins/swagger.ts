@@ -4,14 +4,10 @@ import { fastifySwaggerUi } from '@fastify/swagger-ui';
 
 export default fp(async (fastify) => {
   fastify.addHook('onRoute', (route) => {
-    if (!route.schema) {
-      route.schema = {};
-    }
+    if (!route.schema) route.schema = {};
 
     let { url } = route;
-    if (url.endsWith('/')) {
-      url = url.slice(0, -1);
-    }
+    if (url.endsWith('/')) url = url.slice(0, -1);
 
     const parts = url.split('/');
     if (parts.at(-1)?.includes(':')) {

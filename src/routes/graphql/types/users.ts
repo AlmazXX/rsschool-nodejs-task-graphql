@@ -62,13 +62,3 @@ export const UserType: GraphQLObjectType<IUser, Context> = new GraphQLObjectType
     },
   }),
 });
-
-export const isUserRecord = (record: unknown): record is IUser => {
-  return (
-    !!record &&
-    typeof record === 'object' &&
-    'id' in record &&
-    'name' in record &&
-    'balance' in record
-  );
-};

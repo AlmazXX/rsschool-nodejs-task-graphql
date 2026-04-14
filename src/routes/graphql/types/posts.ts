@@ -46,14 +46,3 @@ export const PostType = new GraphQLObjectType<IPost, Context>({
     },
   }),
 });
-
-export const isPostRecord = (record: unknown): record is IPost => {
-  return (
-    !!record &&
-    typeof record === 'object' &&
-    'id' in record &&
-    'title' in record &&
-    'content' in record &&
-    'authorId' in record
-  );
-};

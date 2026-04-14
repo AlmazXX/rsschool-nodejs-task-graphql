@@ -6,10 +6,10 @@ export const batchProfiles = async (userIds: readonly string[], prisma: PrismaCl
     where: { userId: { in: <string[]>userIds } },
   });
 
-  const mappedProfiles = profiles.reduce<Record<string, IProfile>>((acc, profile) => {
-    acc[profile.userId] = profile;
+  const profilesMap = profiles.reduce((acc, profile) => {
+    acc.set(profile.userId, profile);
     return acc;
-  }, {});
+  }, new Map<string, IProfile>());
 
-  return userIds.map((id) => mappedProfiles[id] ?? null);
+  return userIds.map((id) => profilesMap.get(id) ?? null);
 };
